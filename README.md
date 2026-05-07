@@ -22,7 +22,7 @@ She tried maps — outdated. She tried apps — unreliable. She asked people —
 
 ## Live Demo
 
-🔗 **[busnow.netlify.app](https://busnow.netlify.app)**
+🔗 **[busnow.netlify.app](https://69fc3ca1d3e9933232ffd36a--moonlit-bunny-c4e702.netlify.app/)**
 
 Test scenario: **Ameerpet stop, Hyderabad** — Routes 22, 7X, 14
 
