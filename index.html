@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="BusNow — Real-time bus ETA and delay prediction for Hyderabad commuters">
+<title>BusNow — Real-Time Bus Tracker</title>
+<style>
+/* ── Reset & base ─────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef2f7;color:#1a2a3a;font-size:15px;line-height:1.4}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit}
+
+/* ── Layout ───────────────────────────────────────────────── */
+.app{max-width:440px;margin:0 auto;min-height:100vh;background:#eef2f7;padding-bottom:32px}
+
+/* ── Ticker ───────────────────────────────────────────────── */
+.ticker-wrap{background:#102a45;overflow:hidden;height:32px;display:flex;align-items:center}
+.ticker{display:flex;gap:40px;animation:scroll 22s linear infinite;white-space:nowrap;padding:0 20px}
+.ticker span{color:rgba(255,255,255,0.7);font-size:12px}
+.ticker b{color:#f5a623}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header{background:linear-gradient(135deg,#1a3a5c 0%,#0f2235 100%);color:#fff;padding:16px 18px 20px;display:flex;justify-content:space-between;align-items:flex-start}
+.header-left h1{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.header-left p{font-size:12px;opacity:0.65;margin-top:2px}
+.live-pill{background:rgba(46,204,113,0.2);border:1px solid rgba(46,204,113,0.5);border-radius:20px;padding:4px 10px;font-size:11px;color:#5dde96;display:flex;align-items:center;gap:5px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#2ecc71;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+
+/* ── Search ───────────────────────────────────────────────── */
+.search-wrap{padding:14px 14px 0}
+.search-box{background:#fff;border-radius:12px;display:flex;align-items:center;padding:10px 14px;gap:10px;border:1.5px solid #dde6f0;box-shadow:0 2px 10px rgba(26,58,92,0.06)}
+.search-box input{border:none;outline:none;flex:1;font-size:15px;color:#1a2a3a;background:transparent}
+.search-box input::placeholder{color:#a0b0c0}
+.search-clear{color:#a0b0c0;font-size:18px;cursor:pointer;padding:2px;line-height:1}
+
+/* ── Stop label ───────────────────────────────────────────── */
+.stop-label{display:flex;align-items:center;gap:6px;padding:12px 16px 6px;font-size:12px;color:#5a7a9a;font-weight:600;text-transform:uppercase;letter-spacing:0.8px}
+.stop-dot{width:8px;height:8px;border-radius:50%;background:#1a3a5c}
+
+/* ── Alert bar ────────────────────────────────────────────── */
+.alert{background:#fff8e8;border-left:3px solid #f5a623;margin:10px 14px 4px;border-radius:0 10px 10px 0;padding:9px 13px;font-size:12.5px;color:#7a5800;display:flex;gap:8px;align-items:flex-start}
+
+/* ── Bus cards ────────────────────────────────────────────── */
+.cards{padding:0 14px}
+.card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #e4edf6;box-shadow:0 2px 8px rgba(26,58,92,0.05);cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.card:hover,.card.active{border-color:#1a3a5c;box-shadow:0 4px 18px rgba(26,58,92,0.13)}
+.card.active{border-width:2px}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.route-badge{background:#1a3a5c;color:#fff;font-size:13px;font-weight:700;padding:4px 13px;border-radius:20px}
+.eta-num{font-size:21px;font-weight:800}
+.eta-num.green{color:#16a34a}
+.eta-num.red{color:#dc2626}
+.eta-num.amber{color:#d97706}
+.card-route{font-size:13px;color:#4a6a8a;margin-bottom:8px}
+.tags{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.tag-ontime{background:#dcfce7;color:#15803d}
+.tag-delayed{background:#fee2e2;color:#b91c1c}
+.tag-early{background:#fef9c3;color:#854d0e}
+.tag-crowd{background:#eff6ff;color:#1d4ed8}
+.conf{font-size:11px;color:#8a9aaa;margin-left:auto}
+.progress{background:#e8f0f8;border-radius:4px;height:4px;margin-top:9px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .8s ease}
+
+/* ── Detail panel ─────────────────────────────────────────── */
+.detail{background:#1a3a5c;border-radius:14px;margin:0 14px 12px;padding:18px;color:#fff;display:none}
+.detail.show{display:block}
+.detail-header{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;opacity:0.9}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat{background:rgba(255,255,255,0.1);border-radius:10px;padding:11px 13px}
+.stat .val{font-size:20px;font-weight:800}
+.stat .lbl{font-size:11px;opacity:0.6;margin-top:2px}
+.tl-label{font-size:11px;opacity:0.55;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.7px}
+.timeline{border-left:2px solid rgba(255,255,255,0.2);padding-left:15px;margin-bottom:14px}
+.tl-stop{position:relative;margin-bottom:11px;padding-left:2px}
+.tl-stop::before{content:'';position:absolute;left:-20px;top:5px;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3)}
+.tl-stop.passed::before{background:#2ecc71}
+.tl-stop.current::before{background:#f5a623;box-shadow:0 0 0 3px rgba(245,166,35,0.3)}
+.tl-stop .sn{font-size:13px;font-weight:500}
+.tl-stop .st{font-size:11px;opacity:0.5}
+.advice-box{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.35);border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.advice-box strong{color:#f5c65d}
+.hist-note{font-size:11px;opacity:0.5;margin-top:6px}
+.wa-btn{width:100%;background:#25d366;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.3px}
+.wa-btn:active{background:#1da851}
+
+/* ── Refresh bar ──────────────────────────────────────────── */
+.refresh-bar{display:flex;justify-content:space-between;align-items:center;padding:9px 18px;background:#fff;border-bottom:1px solid #dde6f0;font-size:12px;color:#6a8aaa}
+.refresh-btn{background:none;border:none;color:#1a3a5c;font-weight:700;font-size:12px;padding:2px 6px}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.empty{text-align:center;padding:32px 16px;color:#8a9aaa;font-size:14px}
+.footer{text-align:center;font-size:11px;color:#8a9aaa;padding:16px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Scrolling news ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">
+      <span>🚌 Route 22 — <b>On time</b></span>
+      <span>⚠ Route 7X — <b>+8 min delay</b></span>
+      <span>✅ Route 14 — <b>Running early</b></span>
+      <span>ℹ Traffic: Central Market — slow moving</span>
+      <span>🚌 Route 22 — <b>On time</b></span>
+      <span>⚠ Route 7X — <b>+8 min delay</b></span>
+      <span>✅ Route 14 — <b>Running early</b></span>
+      <span>ℹ Traffic: Central Market — slow moving</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>🚌 BusNow</h1>
+      <p>Real-time commute intelligence · Hyderabad</p>
+    </div>
+    <div class="live-pill"><span class="live-dot"></span>Live</div>
+  </div>
+
+  <!-- Refresh bar -->
+  <div class="refresh-bar">
+    <span id="refreshLabel">Updated just now</span>
+    <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <div class="search-box">
+      <span style="color:#8a9aaa;font-size:16px">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search route or stop…" oninput="filterBuses(this.value)">
+      <span class="search-clear" onclick="clearSearch()">✕</span>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert" id="alertBar">
+    <span>⚠</span>
+    <span>Route 7X running ~8 min late — heavy traffic near Central Market. Consider Route 22 + Metro.</span>
+  </div>
+
+  <!-- Stop label -->
+  <div class="stop-label">
+    <span class="stop-dot"></span>
+    Buses near you — Ameerpet X Roads
+  </div>
+
+  <!-- Bus cards -->
+  <div class="cards" id="cardsContainer"></div>
+
+  <!-- Detail panel -->
+  <div class="detail" id="detailPanel">
+    <div class="detail-header" id="detailHeader">📍 Route Details</div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="tl-label">Route progress</div>
+    <div class="timeline" id="timeline"></div>
+    <div class="advice-box" id="adviceBox"></div>
+    <button class="wa-btn" onclick="shareWhatsApp()">📲 Share ETA via WhatsApp</button>
+  </div>
+
+  <div class="footer">
+    Prediction engine: weighted GPS + historical delay model<br>
+    Data: TSRTC API → GTFS-RT → mock pipeline<br>
+    Works on 2G · < 15KB · No app install needed
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// PREDICTION ENGINE (embedded from predictor.js)
+// ═══════════════════════════════════════════════════════
+
+const HISTORICAL_DELAYS = {
+  "22": { 1:{8:2.4},2:{8:2.1},3:{8:2.8},4:{8:2.3},5:{8:3.5},6:{8:1.2},0:{8:0.8} },
+  "7X": { 1:{8:6.8},2:{8:5.9},3:{8:7.2},4:{8:8.1},5:{8:9.0},6:{8:2.5},0:{8:1.8} },
+  "14": { 1:{8:1.5},2:{8:1.2},3:{8:1.7},4:{8:1.0},5:{8:2.8},6:{8:0.5},0:{8:0.3} }
+};
+const ON_TIME_RATE = { "22":0.78, "7X":0.41, "14":0.86 };
+const TRAFFIC_ZONES = [
+  {name:"Central Market",  lat:17.4239,lng:78.4738,r:0.8,m:1.6},
+  {name:"Ameerpet Jct",   lat:17.4374,lng:78.4487,r:0.5,m:1.4},
+  {name:"HITEC Signal",   lat:17.4435,lng:78.3771,r:0.6,m:1.3},
+  {name:"LB Nagar Circle",lat:17.3438,lng:78.5514,r:0.7,m:1.5},
+];
+
+function haversine(a,b,c,d){
+  const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180;
+  const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function trafficMult(lat,lng){
+  let m=1;
+  for(const z of TRAFFIC_ZONES) if(haversine(lat,lng,z.lat,z.lng)<=z.r) m=Math.max(m,z.m);
+  return m;
+}
+function predictETA({routeId,busLat,busLng,stopLat,stopLng,scheduledMinFromNow,walkMin=4}){
+  const now=new Date(),hr=now.getHours(),dow=now.getDay();
+  const hist=(HISTORICAL_DELAYS[routeId]||{})[dow]||{};
+  const histDelay=hist[hr]??hist[hr-1]??hist[hr+1]??0;
+  const dist=haversine(busLat,busLng,stopLat,stopLng);
+  const spd=(hr>=8&&hr<=10)||(hr>=17&&hr<=19)?14:22;
+  const tm=trafficMult(busLat,busLng);
+  const gpsTrav=(dist/spd)*60*tm;
+  const blended=gpsTrav*0.50+scheduledMinFromNow*0.30+(scheduledMinFromNow+histDelay)*0.20;
+  const delay=blended-scheduledMinFromNow;
+  const otr=ON_TIME_RATE[routeId]||0.7;
+  const conf=Math.round(Math.min(99,Math.max(42,otr*100-(tm-1)*30-Math.min(20,Math.abs(delay)*2))));
+  const status=delay>2?'delayed':delay<-1?'early':'on-time';
+  const leaveMs=Date.now()+(blended-walkMin-1)*60000;
+  const leaveBy=new Date(leaveMs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  let explanation='';
+  if(status==='delayed') explanation=`Running ~${Math.round(delay)} min late. Traffic multiplier: ${tm}×. Route 7X is late ${Math.round((1-otr)*100)}% of ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dow]} mornings.`;
+  else if(status==='early') explanation=`Running ~${Math.abs(Math.round(delay))} min early. Light traffic on this route today.`;
+  else explanation=`On schedule. ${Math.round(otr*100)}% on-time rate over last 30 days for this route.`;
+  return {etaMin:Math.max(0,Math.round(blended*10)/10),delay:Math.round(delay*10)/10,conf,status,leaveBy,explanation};
+}
+
+// ═══════════════════════════════════════════════════════
+// MOCK GPS PIPELINE (simulates live data)
+// ═══════════════════════════════════════════════════════
+
+const gpsState={
+  "22":{lat:17.4312,lng:78.4420,speed:16},
+  "7X":{lat:17.4200,lng:78.4580,speed:7},
+  "14":{lat:17.4455,lng:78.4385,speed:24},
+};
+function advanceGPS(){
+  const target={lat:17.4374,lng:78.4487};
+  for(const id of Object.keys(gpsState)){
+    const s=gpsState[id];
+    s.lat+=(target.lat-s.lat)*0.04;
+    s.lng+=(target.lng-s.lng)*0.04;
+    s.speed=Math.max(5,s.speed+(Math.random()-.5)*2);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ROUTE DATA
+// ═══════════════════════════════════════════════════════
+
+const ROUTES=[
+  {
+    id:"22",label:"Route 22",name:"Ameerpet → HITEC City",crowd:"Medium",
+    baseMin:5,
+    stops:[
+      {n:"Ameerpet X Roads",t:"8:12",passed:true,current:false},
+      {n:"SR Nagar",t:"8:17",passed:true,current:false},
+      {n:"Yusufguda",t:"8:21",passed:false,current:true},
+      {n:"Jubilee Hills Check Post",t:"8:26",passed:false,current:false},
+      {n:"HITEC City",t:"8:34",passed:false,current:false},
+    ]
+  },
+  {
+    id:"7X",label:"Route 7X",name:"Ameerpet → LB Nagar",crowd:"High",
+    baseMin:5,
+    stops:[
+      {n:"Punjagutta",t:"8:05",passed:true,current:false},
+      {n:"Ameerpet",t:"8:21",passed:false,current:true},
+      {n:"Lakdi-ka-pul",t:"8:29",passed:false,current:false},
+      {n:"Nampally",t:"8:38",passed:false,current:false},
+      {n:"LB Nagar",t:"9:05",passed:false,current:false},
+    ]
+  },
+  {
+    id:"14",label:"Route 14",name:"Ameerpet → Secunderabad",crowd:"Low",
+    baseMin:9,
+    stops:[
+      {n:"Begumpet",t:"8:09",passed:true,current:false},
+      {n:"SP Road",t:"8:14",passed:true,current:false},
+      {n:"Ameerpet",t:"8:20",passed:false,current:true},
+      {n:"Paradise",t:"8:28",passed:false,current:false},
+      {n:"Secunderabad",t:"8:36",passed:false,current:false},
+    ]
+  }
+];
+
+const STOP={lat:17.4374,lng:78.4487};
+
+// ═══════════════════════════════════════════════════════
+// STATE & RENDER
+// ═══════════════════════════════════════════════════════
+
+let predictions={}, selectedId=null, query='';
+
+function computePredictions(){
+  ROUTES.forEach(r=>{
+    const gps=gpsState[r.id];
+    predictions[r.id]=predictETA({
+      routeId:r.id,
+      busLat:gps.lat,busLng:gps.lng,
+      stopLat:STOP.lat,stopLng:STOP.lng,
+      scheduledMinFromNow:r.baseMin,
+      walkMin:4
+    });
+  });
+}
+
+function crowdColor(c){return c==='Low'?'#16a34a':c==='Medium'?'#d97706':'#dc2626'}
+
+function renderCards(){
+  const c=document.getElementById('cardsContainer');
+  const list=ROUTES.filter(r=>!query||r.id.toLowerCase().includes(query)||r.name.toLowerCase().includes(query));
+  if(!list.length){c.innerHTML='<div class="empty">No routes match your search.</div>';return;}
+  c.innerHTML='';
+  list.forEach(r=>{
+    const p=predictions[r.id];
+    const etaDisp=p.etaMin<=0?'Due now':p.etaMin+' min';
+    const etaCls=p.status==='delayed'?'red':p.status==='early'?'amber':'green';
+    const tagCls=p.status==='delayed'?'tag-delayed':p.status==='early'?'tag-early':'tag-ontime';
+    const tagTxt=p.status==='delayed'?'⚠ Delayed':p.status==='early'?'⚡ Early':'✅ On time';
+    const prog=Math.min(98,Math.max(8,100-((p.etaMin/18)*100)));
+    const progClr=p.status==='delayed'?'#dc2626':p.status==='early'?'#d97706':'#16a34a';
+    const div=document.createElement('div');
+    div.className='card'+(selectedId===r.id?' active':'');
+    div.onclick=()=>selectRoute(r.id);
+    div.innerHTML=`
+      <div class="card-top">
+        <span class="route-badge">${r.label}</span>
+        <span class="eta-num ${etaCls}">${etaDisp}</span>
+      </div>
+      <div class="card-route">${r.name}</div>
+      <div class="tags">
+        <span class="tag ${tagCls}">${tagTxt}</span>
+        <span class="tag tag-crowd" style="color:${crowdColor(r.crowd)}">👥 ${r.crowd}</span>
+        <span class="conf">🎯 ${p.conf}% accuracy</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${prog}%;background:${progClr}"></div></div>
+    `;
+    c.appendChild(div);
+  });
+}
+
+function selectRoute(id){
+  selectedId=id;
+  renderCards();
+  const r=ROUTES.find(x=>x.id===id);
+  const p=predictions[id];
+  const panel=document.getElementById('detailPanel');
+  panel.classList.add('show');
+  document.getElementById('detailHeader').textContent=`📍 ${r.label} — Live View`;
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat"><div class="val">${p.etaMin<=0?'Now':p.etaMin+' min'}</div><div class="lbl">ETA at your stop</div></div>
+    <div class="stat"><div class="val">${p.leaveBy}</div><div class="lbl">Leave by</div></div>
+    <div class="stat"><div class="val">${p.conf}%</div><div class="lbl">Prediction confidence</div></div>
+    <div class="stat"><div class="val">${r.crowd}</div><div class="lbl">Crowd level now</div></div>
+  `;
+  document.getElementById('timeline').innerHTML=r.stops.map(s=>`
+    <div class="tl-stop ${s.passed?'passed':''} ${s.current?'current':''}">
+      <div class="sn">${s.n}${s.current?' — Bus here now':''}</div>
+      <div class="st">${s.t}</div>
+    </div>
+  `).join('');
+  document.getElementById('adviceBox').innerHTML=`
+    <strong>💡 Smart Advice</strong><br>${p.explanation}
+    <div class="hist-note">Data source: live GPS + 30-day delay model</div>
+  `;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function shareWhatsApp(){
+  if(!selectedId)return;
+  const r=ROUTES.find(x=>x.id===selectedId);
+  const p=predictions[selectedId];
+  const msg=`🚌 BusNow — Ameerpet Stop\n${r.label}: ${r.name}\nETA: ${p.etaMin<=0?'Due now':p.etaMin+' min'} | Leave by: ${p.leaveBy}\nStatus: ${p.status} | Accuracy: ${p.conf}%\n\nbusnow.netlify.app`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function filterBuses(v){
+  query=v.toLowerCase().trim();
+  renderCards();
+}
+function clearSearch(){
+  document.getElementById('searchInput').value='';
+  query='';
+  renderCards();
+}
+
+function refreshAll(){
+  advanceGPS();
+  computePredictions();
+  renderCards();
+  if(selectedId) selectRoute(selectedId);
+  const now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  document.getElementById('refreshLabel').textContent='Updated at '+now;
+}
+
+// ─── Init ─────────────────────────────────────────────
+computePredictions();
+renderCards();
+
+// Auto-refresh every 15 seconds
+setInterval(refreshAll, 15000);
+</script>
+</body>
+</html>

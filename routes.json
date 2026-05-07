@@ -1,0 +1,58 @@
+{
+  "city": "Hyderabad",
+  "agency": "TSRTC",
+  "lastUpdated": "2026-05-07",
+  "routes": [
+    {
+      "id": "22",
+      "name": "Ameerpet → HITEC City",
+      "frequency": "Every 8–12 min (peak), 20 min (off-peak)",
+      "peakHours": [[7,10],[17,20]],
+      "stops": [
+        { "name": "Ameerpet X Roads",        "lat": 17.4374, "lng": 78.4487, "seq": 1 },
+        { "name": "SR Nagar",                 "lat": 17.4420, "lng": 78.4390, "seq": 2 },
+        { "name": "Yusufguda",                "lat": 17.4433, "lng": 78.4270, "seq": 3 },
+        { "name": "Jubilee Hills Check Post", "lat": 17.4320, "lng": 78.4127, "seq": 4 },
+        { "name": "HITEC City",               "lat": 17.4435, "lng": 78.3771, "seq": 5 }
+      ],
+      "avgDelayMorningPeak": 2.4,
+      "onTimeRate30d": 0.78
+    },
+    {
+      "id": "7X",
+      "name": "Ameerpet → LB Nagar",
+      "frequency": "Every 15–25 min (peak), 35 min (off-peak)",
+      "peakHours": [[7,10],[17,20]],
+      "stops": [
+        { "name": "Punjagutta",               "lat": 17.4239, "lng": 78.4738, "seq": 1 },
+        { "name": "Ameerpet",                 "lat": 17.4374, "lng": 78.4487, "seq": 2 },
+        { "name": "Lakdi-ka-pul",             "lat": 17.4020, "lng": 78.4661, "seq": 3 },
+        { "name": "Nampally",                 "lat": 17.3850, "lng": 78.4737, "seq": 4 },
+        { "name": "LB Nagar",                 "lat": 17.3438, "lng": 78.5514, "seq": 5 }
+      ],
+      "avgDelayMorningPeak": 8.1,
+      "onTimeRate30d": 0.41
+    },
+    {
+      "id": "14",
+      "name": "Ameerpet → Secunderabad",
+      "frequency": "Every 10–15 min (peak), 25 min (off-peak)",
+      "peakHours": [[7,10],[17,20]],
+      "stops": [
+        { "name": "Begumpet",                 "lat": 17.4455, "lng": 78.4618, "seq": 1 },
+        { "name": "SP Road",                  "lat": 17.4410, "lng": 78.4540, "seq": 2 },
+        { "name": "Ameerpet",                 "lat": 17.4374, "lng": 78.4487, "seq": 3 },
+        { "name": "Paradise",                 "lat": 17.4449, "lng": 78.4922, "seq": 4 },
+        { "name": "Secunderabad",             "lat": 17.4399, "lng": 78.4983, "seq": 5 }
+      ],
+      "avgDelayMorningPeak": 1.0,
+      "onTimeRate30d": 0.86
+    }
+  ],
+  "trafficZones": [
+    { "name": "Central Market Area",  "lat": 17.4239, "lng": 78.4738, "radiusKm": 0.8, "multiplier": 1.6 },
+    { "name": "Ameerpet Junction",    "lat": 17.4374, "lng": 78.4487, "radiusKm": 0.5, "multiplier": 1.4 },
+    { "name": "HITEC City Signal",    "lat": 17.4435, "lng": 78.3771, "radiusKm": 0.6, "multiplier": 1.3 },
+    { "name": "LB Nagar Circle",      "lat": 17.3438, "lng": 78.5514, "radiusKm": 0.7, "multiplier": 1.5 }
+  ]
+}
